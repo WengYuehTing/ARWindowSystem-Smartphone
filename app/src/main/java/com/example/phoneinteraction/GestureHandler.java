@@ -23,7 +23,7 @@ public class GestureHandler implements View.OnTouchListener {
     // 点击手抖容忍界限（距离超过此距离则不为长按）
     private static final float PRESS_SHAKE_LIMIT = 100.0f;
 
-    private static final int DOUBLE_FINGER_YOFFSET = 253;
+    private static final int MULTI_FINGER_YOFFSET = 253;
 
     // 上下滑距离界限（超过此距离则为合法滑动）
     private static final float GESTURE_VERTICAL_THREOLD = 200.0f;
@@ -254,7 +254,7 @@ public class GestureHandler implements View.OnTouchListener {
                 if(handled) { break; }
 
                 endPoint.x = event.getX(0);
-                endPoint.y = event.getY(0) + DOUBLE_FINGER_YOFFSET;
+                endPoint.y = event.getY(0) + MULTI_FINGER_YOFFSET;
                 endPoint.print();
 
                 if (longPressRunnable.pressing) {
