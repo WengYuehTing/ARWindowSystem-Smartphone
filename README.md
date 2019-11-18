@@ -13,12 +13,13 @@
 (單/雙/三/四/五)指 長按左滑  
 (單/雙/三/四/五)指 長按下滑  
 (單/雙/三/四/五)指 長按結束  
+(單/雙/三/四/五)指 屏幕滑動的x和y偏移值  
 
 ## Command
 
 Discrete rules：fingersCount + mediator(,) + gestureType.    
 Continuous rules：fingersCount + mediator(,) + Move + mediator(,) + $(x_offset) + mediator(,) + $(y_offset).  
-recv side：pass mediator patameter into string.spilt method to access actual value.  
+recv side：pass mediator patameter into string.split method to access actual value.  
 
 ### Discrete Command
 1,OneClick  
@@ -91,7 +92,6 @@ recv side：pass mediator patameter into string.spilt method to access actual va
 
 ## Note  
 GestureHandler class provide the methods mentioned above, the MULTI_FINGER_OFFSET value depends on the devices.   
-
 
 ## Environment  
 Work on Android Studio 3.5.2, JRE 1.8.0  
