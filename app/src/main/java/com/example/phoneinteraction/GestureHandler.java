@@ -120,13 +120,21 @@ public class GestureHandler implements View.OnTouchListener {
         public void run() {
             pressing = true;
             String command = String.valueOf(fingers) + mediator + GestureType.LPStart.toString();
-            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            textView.setText(parser(command));
+
+            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            }
         }
 
         public void end() {
 
             String command = String.valueOf(fingers) + mediator + GestureType.LPEnd.toString();
-            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            textView.setText(parser(command));
+
+            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            }
         }
     }
 
@@ -138,11 +146,13 @@ public class GestureHandler implements View.OnTouchListener {
 
         @Override
         public void run() {
-
-            String command = String.valueOf(fingers) + mediator + GestureType.OneClick.toString();
-            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-
             finished = true;
+            String command = String.valueOf(fingers) + mediator + GestureType.OneClick.toString();
+            textView.setText(parser(command));
+            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            }
+
         }
     }
 
@@ -161,13 +171,21 @@ public class GestureHandler implements View.OnTouchListener {
                 if (endPoint.above(startPoint)) {
                     // 上滑
                     String command = String.valueOf(fingers) + mediator + GestureType.Up.toString();
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    textView.setText(parser(command));
+
+                    if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    }
                 }
 
                 else if(endPoint.under(startPoint)) {
                     // 下滑
                     String command = String.valueOf(fingers) + mediator + GestureType.Down.toString();
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    textView.setText(parser(command));
+
+                    if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    }
                 }
             }
 
@@ -175,13 +193,21 @@ public class GestureHandler implements View.OnTouchListener {
                 if(endPoint.leftOf(startPoint)) {
                     // 左滑
                     String command = String.valueOf(fingers) + mediator + GestureType.Left.toString();
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    textView.setText(parser(command));
+
+                    if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    }
                 }
 
                 else if(endPoint.rightOf(startPoint)) {
                     // 右滑
                     String command = String.valueOf(fingers) + mediator + GestureType.Right.toString();
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    textView.setText(parser(command));
+
+                    if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                    }
                 }
             }
         }
@@ -198,8 +224,11 @@ public class GestureHandler implements View.OnTouchListener {
 
             // Implement double click method here
             String command = String.valueOf(fingers) + mediator + GestureType.DoubleClick.toString();
-            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            textView.setText(parser(command));
 
+            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+            }
         }
     }
 
@@ -209,10 +238,13 @@ public class GestureHandler implements View.OnTouchListener {
 
     private int windowHeight;
 
+    private TextView textView;
+
     
     private static String TAG = "Smartphone-Interactions";
 
-    public GestureHandler(int windowWidth, int windowHeight) {
+    public GestureHandler(TextView textView, int windowWidth, int windowHeight) {
+        this.textView = textView;
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
         singleClickRunnable.finished = true;
@@ -389,14 +421,20 @@ public class GestureHandler implements View.OnTouchListener {
             if (endPoint.above(startPoint)) {
 
                 String command = String.valueOf(fingers) + mediator + GestureType.LPUp.toString();
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                textView.setText(parser(command));
 
+                if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                }
             }
             else if (endPoint.under(startPoint)) {
 
                 String command = String.valueOf(fingers) + mediator + GestureType.LPDown.toString();
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                textView.setText(parser(command));
 
+                if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                }
             }
         }
 
@@ -405,20 +443,91 @@ public class GestureHandler implements View.OnTouchListener {
             if (endPoint.leftOf(startPoint)) {
 
                 String command = String.valueOf(fingers) + mediator + GestureType.LPLeft.toString();
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                textView.setText(parser(command));
 
-
+                if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                }
             }
             else if (endPoint.rightOf(startPoint)) {
 
                 String command = String.valueOf(fingers) + mediator + GestureType.LPRight.toString();
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                textView.setText(parser(command));
 
+                if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                }
             }
         }
 
         longPressRunnable.end();
     }
 
+    private String parser(String message) {
+
+        String[] array = message.split(GestureHandler.mediator);
+
+        String res = "";
+
+        switch (array[0]) {
+            case "1":
+                res += "单指";
+                break;
+            case "2":
+                res += "双指";
+                break;
+            case "3":
+                res += "三指";
+                break;
+            case "4":
+                res += "四指";
+                break;
+            case "5":
+                res += "五指";
+                break;
+        }
+
+        switch (array[1]) {
+            case "OneClick":
+                res += "单击";
+                break;
+            case "DoubleClick":
+                res += "双击";
+                break;
+            case "Up":
+                res += "上滑";
+                break;
+            case "Down":
+                res += "下滑";
+                break;
+            case "Left":
+                res += "左滑";
+                break;
+            case "Right":
+                res += "右滑";
+                break;
+            case "LPStart":
+                res += "长按开始";
+                break;
+            case "LPEnd":
+                res += "长按结束";
+                break;
+            case "LPUp":
+                res += "长按上滑";
+                break;
+            case "LPDown":
+                res += "长按下滑";
+                break;
+            case "LPLeft":
+                res += "长按左滑";
+                break;
+            case "LPRight":
+                res += "长按右滑";
+                break;
+        }
+
+        return res;
+
+    }
 
 }

@@ -107,6 +107,10 @@ public class YTNetwork {
             return socket;
         }
 
+        public boolean isValid() {
+            return socket != null;
+        }
+
         public String getIP() {
             return connectedIP;
         }
@@ -286,6 +290,9 @@ public class YTNetwork {
         }
 
         public void sendString(String str) {
+
+
+
             final String str1 = str + "\n";
             try {
                 sendBytes(str1.getBytes("utf-8"), str1.length());
