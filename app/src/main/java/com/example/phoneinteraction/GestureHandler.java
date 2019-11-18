@@ -24,7 +24,8 @@ enum GestureType {
     LPUp,
     LPDown,
     LPLeft,
-    LPRight
+    LPRight,
+    Move
 };
 
 public class GestureHandler implements View.OnTouchListener {
@@ -58,7 +59,7 @@ public class GestureHandler implements View.OnTouchListener {
 
     private static final float GESTURE_BORDER_WIDTH = 150.0f;
 
-    public static final String mediator = "-";
+    public static final String mediator = ",";
 
     private Handler handler = new Handler();
 
@@ -108,6 +109,7 @@ public class GestureHandler implements View.OnTouchListener {
     }
 
     private Point startPoint = new Point();
+    private Point curPoint = new Point(); // use to control continuous data
     private Point endPoint = new Point();
 
 
@@ -262,6 +264,7 @@ public class GestureHandler implements View.OnTouchListener {
 
                 startPoint.x = event.getRawX();
                 startPoint.y = event.getRawY();
+                curPoint = startPoint;
                 addLongPressCallback();
 
                 //reset
@@ -282,8 +285,21 @@ public class GestureHandler implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_MOVE:
+
+                Log.d("YueTing","Action Move");
+
+                int x_offset = Math.round(event.getRawX() - curPoint.x);
+                int y_offset = Math.round(event.getRawY() - curPoint.y);
                 endPoint.x = event.getRawX();
                 endPoint.y = event.getRawY();
+                curPoint = endPoint;
+
+                String command = fingers + mediator + GestureType.Move.toString() + mediator + x_offset + mediator + y_offset;
+                if(YTNetwork.getInstance().getFirstClient().isValid()) {
+                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+                }
+
+
                 if (!longPressRunnable.pressing) {
                     if (startPoint.distance(endPoint) > LONGPRESS_SHAKE_LIMIT) {
                         removeLongPressCallBack();
