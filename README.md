@@ -32,7 +32,7 @@ recv side：can spilt command by "_"
 2-Up  
 3-Up  
 4-Up    
-5-Up
+5-Up  
 1-Down  
 2-Down  
 3-Down  
