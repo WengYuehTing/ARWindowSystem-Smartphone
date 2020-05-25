@@ -167,17 +167,17 @@ public class GestureHandler implements View.OnTouchListener {
     private static final int MULTI_FINGER_YOFFSET = 84;
 
     // 上下滑距离界限（超过此距离则为合法滑动）
-    private static final float GESTURE_VERTICAL_THREOLD = 200.0f;
-    private static final float GESTURE_LONG_VERTICAL_THREOLD = 600.0f;
+    private static final float GESTURE_VERTICAL_THREOLD = 150.0f;
+    private static final float GESTURE_LONG_VERTICAL_THREOLD = 150.0f;
 
     // 左右滑距离界限（超过此距离则为合法滑动）
-    private static final float GESTURE_HORIZONTAL_THREOLD = 200.0f;
+    private static final float GESTURE_HORIZONTAL_THREOLD = 150.0f;
 
     // 判断上滑下滑时对左右移动的容忍界限
-    private static final float GESTURE_VERTICAL_LIMIT = 200.0f;
+    private static final float GESTURE_VERTICAL_LIMIT = 100.0f;
 
     // 判断左滑右滑时对上下移动的容忍界限
-    private static final float GESTURE_HORIZONTAL_LIMIT = 200.0f;
+    private static final float GESTURE_HORIZONTAL_LIMIT = 100.0f;
 
     private static final float GESTURE_BORDER_WIDTH = 150.0f;
 
@@ -431,22 +431,18 @@ public class GestureHandler implements View.OnTouchListener {
                 Log.d("YueTing","Multi fingers press down");
                 fingers = event.getPointerCount();
                 longPressRunnable.fingers = fingers;
+                Log.d("YueTing", String.valueOf(event.getPointerCount()));
                 break;
             case MotionEvent.ACTION_MOVE:
 
                 Log.d("YueTing","One finger move");
-
                 int x_offset = Math.round(event.getRawX() - curPoint.x);
                 int y_offset = Math.round(event.getRawY() - curPoint.y);
                 endPoint.x = event.getRawX();
                 endPoint.y = event.getRawY();
+                curPoint = endPoint;
 
                 String command = fingers + mediator + GestureType.Move.toString() + mediator + x_offset + mediator + y_offset;
-//                if(YTNetwork.getInstance().getFirstClient().isValid()) {
-//                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                }
-
-                curPoint = endPoint;
 
                 if(startPoint.distance(farestPoint) < startPoint.distance(endPoint)) {
                     farestPoint = new Point(endPoint.x, endPoint.y);
@@ -464,18 +460,15 @@ public class GestureHandler implements View.OnTouchListener {
             case MotionEvent.ACTION_POINTER_UP:
 
                 Log.d("YueTing","Multifingers press up");
-                endTime = System.currentTimeMillis();
-                long exe_time = (endTime-startTime);
+                long exe_Time = (System.currentTimeMillis()-startTime);
 
-//                fingers = event.getPointerCount();
-//                longPressRunnable.fingers = fingers;
+                fingers = event.getPointerCount();
+                longPressRunnable.fingers = fingers;
 
                 if(handled) { break; }
 
                 endPoint.x = event.getX(0);
                 endPoint.y = event.getY(0) + MULTI_FINGER_YOFFSET;
-                startPoint.print();
-                endPoint.print();
 
                 if (longPressRunnable.pressing) {
                     handleLongGesture(startPoint,endPoint,fingers);
@@ -483,12 +476,15 @@ public class GestureHandler implements View.OnTouchListener {
                 }
 
                 else if(endPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT || farestPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT) {
+//                    removeLongPressCallBack();
+//                    addFlipCallback(startPoint, endPoint, farestPoint, fingers, exe_Time);
                     flipGestureRunnable.startPoint = startPoint;
                     flipGestureRunnable.endPoint = endPoint;
                     flipGestureRunnable.farestPoint = farestPoint;
                     flipGestureRunnable.fingers = fingers;
-                    flipGestureRunnable.exeTime = exe_time;
+                    flipGestureRunnable.exeTime = exe_Time;
                     flipGestureRunnable.run();
+
                 }
 
                 else if (singleClickRunnable.finished){
@@ -500,7 +496,7 @@ public class GestureHandler implements View.OnTouchListener {
                     removeSingleClickCallback();
                     removeLongPressCallBack();
                     doubleClickRunnable.fingers = fingers;
-                    doubleClickRunnable.exeTime = exe_time;
+                    doubleClickRunnable.exeTime = exe_Time;
                     doubleClickRunnable.run();
                 }
 
@@ -511,19 +507,20 @@ public class GestureHandler implements View.OnTouchListener {
             case MotionEvent.ACTION_UP:
 
                 Log.d("YueTing","One finger press Up");
-                endTime = System.currentTimeMillis();
-                long exeTime = (endTime-startTime);
+                long exeTime = (System.currentTimeMillis()-startTime);
 
                 endPoint.x = event.getRawX();
                 endPoint.y = event.getRawY();
 
-                if(!handled){
+                if(fingers == 1 && !handled){
                     if (longPressRunnable.pressing) {
                         handleLongGesture(startPoint,endPoint,fingers);
                         removeLongPressCallBack();
                     }
 
                     else if(endPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT || farestPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT) {
+//                        removeLongPressCallBack();
+//                        addFlipCallback(startPoint, endPoint, farestPoint, fingers, exeTime);
                         flipGestureRunnable.startPoint = startPoint;
                         flipGestureRunnable.endPoint = endPoint;
                         flipGestureRunnable.farestPoint = farestPoint;
@@ -535,10 +532,14 @@ public class GestureHandler implements View.OnTouchListener {
                     else if (singleClickRunnable.finished){
                         removeLongPressCallBack();
                         addSingleClickCallback(fingers);
+
+
                     }
                     else {
                         removeSingleClickCallback();
                         removeLongPressCallBack();
+                        doubleClickRunnable.fingers = 1;
+                        doubleClickRunnable.exeTime = exeTime;
                         doubleClickRunnable.run();
                     }
                 } else {
@@ -563,6 +564,15 @@ public class GestureHandler implements View.OnTouchListener {
     private void removeSingleClickCallback() {
         handler.removeCallbacks(singleClickRunnable);
         singleClickRunnable.finished = true;
+    }
+
+    private void addFlipCallback(Point start, Point end, Point far, int fingers, long exeTime) {
+        flipGestureRunnable.startPoint = start;
+        flipGestureRunnable.endPoint = end;
+        flipGestureRunnable.farestPoint = far;
+        flipGestureRunnable.fingers = fingers;
+        flipGestureRunnable.exeTime = exeTime;
+        handler.post(flipGestureRunnable);
     }
 
     private void addLongPressCallback() {
@@ -593,13 +603,12 @@ public class GestureHandler implements View.OnTouchListener {
 
         // 标记是否在边缘
         int border = onBorder(startPoint);
-        Event event = new Event();
+        Event event = new Event(fingers, LPEnd, 0, 0);
         
         // 判断上下滑
         if (startPoint.verticalDistance(endPoint) > GESTURE_LONG_VERTICAL_THREOLD &&
                 startPoint.horizontalDistance(endPoint) < GESTURE_VERTICAL_LIMIT) {
             if (endPoint.above(startPoint)) {
-                Log.d("YueTing", "Test");
                 event = new Event(fingers, LPUp, 0, 0);
             }
             else if (endPoint.under(startPoint)) {
@@ -621,85 +630,7 @@ public class GestureHandler implements View.OnTouchListener {
         if(listener != null) {
             listener.onEventTriggered(event);
         }
+
         longPressRunnable.end();
     }
-
-    private String parser(String message) {
-
-        String[] array = message.split(GestureHandler.mediator);
-
-        String res = "";
-
-        switch (array[0]) {
-            case "1":
-                res += "单指";
-                break;
-            case "2":
-                res += "双指";
-                break;
-            case "3":
-                res += "三指";
-                break;
-            case "4":
-                res += "四指";
-                break;
-            case "5":
-                res += "五指";
-                break;
-        }
-
-        switch (array[1]) {
-            case "OneClick":
-                res += "单击";
-                break;
-            case "DoubleClick":
-                res += "双击";
-                break;
-            case "Up":
-                res += "上滑";
-                break;
-            case "Down":
-                res += "下滑";
-                break;
-            case "Left":
-                res += "左滑";
-                break;
-            case "Right":
-                res += "右滑";
-                break;
-            case "UpDown":
-                res += "上滑下滑";
-                break;
-            case "DownUp":
-                res += "下滑上滑";
-                break;
-            case "LeftRight":
-                res += "左滑右滑";
-                break;
-            case "LPStart":
-                res += "长按开始";
-                break;
-            case "LPEnd":
-                res += "长按结束";
-                break;
-            case "LPUp":
-                res += "长按上滑";
-                break;
-            case "LPDown":
-                res += "长按下滑";
-                break;
-            case "LPLeft":
-                res += "长按左滑";
-                break;
-            case "LPRight":
-                res += "长按右滑";
-                break;
-        }
-
-
-
-        return res;
-
-    }
-
 }

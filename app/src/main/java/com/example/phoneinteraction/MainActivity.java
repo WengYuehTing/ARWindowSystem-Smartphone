@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
         setContentView(R.layout.activity_main);
 
         mTextView = findViewById(R.id.output);
+        setRequestedOrientation(ActivityInfo
+                .SCREEN_ORIENTATION_LANDSCAPE);
 
         WindowManager wm = this.getWindowManager();
         int windowWidth = wm.getDefaultDisplay().getWidth();
