@@ -13,8 +13,12 @@ import android.widget.Toast;
 import static com.example.phoneinteraction.GestureType.DoubleClick;
 import static com.example.phoneinteraction.GestureType.Down;
 import static com.example.phoneinteraction.GestureType.DownUp;
+import static com.example.phoneinteraction.GestureType.LPDown;
 import static com.example.phoneinteraction.GestureType.LPEnd;
+import static com.example.phoneinteraction.GestureType.LPLeft;
+import static com.example.phoneinteraction.GestureType.LPRight;
 import static com.example.phoneinteraction.GestureType.LPStart;
+import static com.example.phoneinteraction.GestureType.LPUp;
 import static com.example.phoneinteraction.GestureType.Left;
 import static com.example.phoneinteraction.GestureType.LeftRight;
 import static com.example.phoneinteraction.GestureType.OneClick;
@@ -43,13 +47,113 @@ enum GestureType {
     Move
 };
 
+class Event {
+    private int fingers;
+    private GestureType type;
+    private float distance;
+    private float exeTime;
 
+    public Event() {
+        this.fingers = 1;
+        type = OneClick;
+        distance = 0;
+        exeTime = 0;
+    }
+
+    public Event(int fingers, GestureType type, float distance, float exeTime) {
+        this.fingers = fingers;
+        this.type = type;
+        this.distance = distance;
+        this.exeTime = exeTime;
+    }
+
+    public String decode() {
+        String res = "";
+
+        switch (fingers) {
+            case 1:
+                res += "单指";
+                break;
+            case 2:
+                res += "双指";
+                break;
+            case 3:
+                res += "三指";
+                break;
+            case 4:
+                res += "四指";
+                break;
+            case 5:
+                res += "五指";
+                break;
+        }
+
+        switch (type) {
+            case OneClick:
+                res += "单击";
+                break;
+            case DoubleClick:
+                res += "双击";
+                break;
+            case Up:
+                res += "上滑";
+                break;
+            case Down:
+                res += "下滑";
+                break;
+            case Left:
+                res += "左滑";
+                break;
+            case Right:
+                res += "右滑";
+                break;
+            case UpDown:
+                res += "上滑下滑";
+                break;
+            case DownUp:
+                res += "下滑上滑";
+                break;
+            case LeftRight:
+                res += "左滑右滑";
+                break;
+            case LPStart:
+                res += "长按开始";
+                break;
+            case LPEnd:
+                res += "长按结束";
+                break;
+            case LPUp:
+                res += "长按上滑";
+                break;
+            case LPDown:
+                res += "长按下滑";
+                break;
+            case LPLeft:
+                res += "长按左滑";
+                break;
+            case LPRight:
+                res += "长按右滑";
+                break;
+        }
+
+        return res;
+    }
+
+    public GestureType getType() {
+        return type;
+    }
+}
+
+interface GestureCallback {
+    void onEventTriggered(Event event);
+    void onTracking(Event event, float x, float y);
+}
 
 
 public class GestureHandler implements View.OnTouchListener {
 
     // 长按时间界限（超过此时间则为长按）
-    private static final long LONGPRESS_TIME_THRESHOLD = 600;
+    private static final long LONGPRESS_TIME_THRESHOLD = 300;
 
     // 双击事件界限（两次点击间隔在此时间以内则为双击）
     private static final long DOUBLECLICK_TIME_THRESHOLD = 300;
@@ -60,7 +164,7 @@ public class GestureHandler implements View.OnTouchListener {
     // 点击手抖容忍界限（距离超过此距离则不为长按）
     private static final float PRESS_SHAKE_LIMIT = 100.0f;
 
-    private static final int MULTI_FINGER_YOFFSET = 253;
+    private static final int MULTI_FINGER_YOFFSET = 84;
 
     // 上下滑距离界限（超过此距离则为合法滑动）
     private static final float GESTURE_VERTICAL_THREOLD = 200.0f;
@@ -81,95 +185,7 @@ public class GestureHandler implements View.OnTouchListener {
 
     private Handler handler = new Handler();
 
-    private class Event {
-        private int fingers;
-        private GestureType type;
-        private float distance;
-        private float exeTime;
 
-        public Event(int fingers, GestureType type, float distance, float exeTime) {
-            this.fingers = fingers;
-            this.type = type;
-            this.distance = distance;
-            this.exeTime = exeTime;
-        }
-
-        public String decode() {
-            String res = "";
-
-            switch (fingers) {
-                case 1:
-                    res += "单指";
-                    break;
-                case 2:
-                    res += "双指";
-                    break;
-                case 3:
-                    res += "三指";
-                    break;
-                case 4:
-                    res += "四指";
-                    break;
-                case 5:
-                    res += "五指";
-                    break;
-            }
-
-            switch (type) {
-                case OneClick:
-                    res += "单击";
-                    break;
-                case DoubleClick:
-                    res += "双击";
-                    break;
-                case Up:
-                    res += "上滑";
-                    break;
-                case Down:
-                    res += "下滑";
-                    break;
-                case Left:
-                    res += "左滑";
-                    break;
-                case Right:
-                    res += "右滑";
-                    break;
-                case UpDown:
-                    res += "上滑下滑";
-                    break;
-                case DownUp:
-                    res += "下滑上滑";
-                    break;
-                case LeftRight:
-                    res += "左滑右滑";
-                    break;
-                case LPStart:
-                    res += "长按开始";
-                    break;
-                case LPEnd:
-                    res += "长按结束";
-                    break;
-                case LPUp:
-                    res += "长按上滑";
-                    break;
-                case LPDown:
-                    res += "长按下滑";
-                    break;
-                case LPLeft:
-                    res += "长按左滑";
-                    break;
-                case LPRight:
-                    res += "长按右滑";
-                    break;
-            }
-
-            return res;
-        }
-
-        public GestureType getType() {
-            return type;
-        }
-    }
 
     private class Point {
         public float x;
@@ -231,24 +247,16 @@ public class GestureHandler implements View.OnTouchListener {
             pressing = true;
             startTime = System.currentTimeMillis();
             Event event = new Event(fingers, LPStart, 0, LONGPRESS_TIME_THRESHOLD);
-            String decoded = event.decode();
-            textView.setText(decoded);
-//            String command = String.valueOf(fingers) + mediator + GestureType.LPStart.toString() + mediator + "0" + mediator + "0";
-//            textView.setText(parser(command));
-//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//            }
+            if(listener != null) {
+                listener.onEventTriggered(event);
+            }
         }
 
         public void end() {
             float exeTime = (float)(System.currentTimeMillis() - startTime);
             Event event = new Event(fingers, LPEnd, 0, exeTime);
-            String decoded = event.decode();
-//            textView.setText(decoded);
-
-//            String command = String.valueOf(fingers) + mediator + GestureType.LPEnd.toString() + mediator + "0" + mediator + exeTime;
-//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//            if(listener != null) {
+//                listener.onEventTriggered(event);
 //            }
         }
     }
@@ -258,19 +266,14 @@ public class GestureHandler implements View.OnTouchListener {
     private class SingleClickRunnable implements Runnable {
         public boolean finished;
         public int fingers;
-        public long exeTime = 0;
 
         @Override
         public void run() {
             finished = true;
             Event event = new Event(fingers, OneClick, 0, 0);
-            String decoded = event.decode();
-            textView.setText(decoded);
-//            String command = String.valueOf(fingers) + mediator + OneClick.toString() + mediator + "0" + mediator + exeTime;
-//            textView.setText(parser(command));
-//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//            }
+            if(listener != null) {
+                listener.onEventTriggered(event);
+            }
 
         }
     }
@@ -297,31 +300,16 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (endPoint.above(startPoint)) {
                     // 上滑
-
                     Event event = new Event(fingers, Up, distance, exeTime);
-                    String decoded = event.decode();
-                    textView.setText(decoded);
-
-
-
-//                    String command = String.valueOf(fingers) + mediator + GestureType.Up.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                    String result = parser(command);
-//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                    }
+                    if(listener != null) {
+                        listener.onEventTriggered(event);
+                    }
                 } else if (endPoint.under(startPoint)) {
                     // 下滑
                     Event event = new Event(fingers, Down, distance, exeTime);
-                    String decoded = event.decode();
-                    textView.setText(decoded);
-//                    String command = String.valueOf(fingers) + mediator + GestureType.Down.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                    String result = parser(command);
-//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                    }
+                    if(listener != null) {
+                        listener.onEventTriggered(event);
+                    }
                 }
             } else if (endPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && endPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT) {
 
@@ -330,27 +318,15 @@ public class GestureHandler implements View.OnTouchListener {
                 if (endPoint.leftOf(startPoint)) {
                     // 左滑
                     Event event = new Event(fingers, Left, distance, exeTime);
-                    String decoded = event.decode();
-                    textView.setText(decoded);
-//                    String command = String.valueOf(fingers) + mediator + GestureType.Left.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                    String result = parser(command);
-//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                    }
+                    if(listener != null) {
+                        listener.onEventTriggered(event);
+                    }
                 } else if (endPoint.rightOf(startPoint)) {
                     // 右滑
                     Event event = new Event(fingers, Right, distance, exeTime);
-                    String decoded = event.decode();
-                    textView.setText(decoded);
-//                    String command = String.valueOf(fingers) + mediator + GestureType.Right.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                    String result = parser(command);
-//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                    }
+                    if(listener != null) {
+                        listener.onEventTriggered(event);
+                    }
                 }
             } else {
                 if(farestPoint.verticalDistance(startPoint) >= GESTURE_VERTICAL_THREOLD && farestPoint.horizontalDistance(startPoint) < GESTURE_HORIZONTAL_LIMIT) {
@@ -358,31 +334,17 @@ public class GestureHandler implements View.OnTouchListener {
                     if(farestPoint.above(startPoint)) {
                         distance = Math.round(farestPoint.distance(startPoint));
                         Event event = new Event(fingers, UpDown, distance, exeTime);
-                        String decoded = event.decode();
-                        textView.setText(decoded);
-//                        Log.d("YueTing", "上滑下滑");
-//                        String command = String.valueOf(fingers) + mediator + GestureType.UpDown.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                        String result = parser(command);
-//                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                        }
+                        if(listener != null) {
+                            listener.onEventTriggered(event);
+                        }
                     }
 
                     else if(farestPoint.under(startPoint)) {
                         distance = Math.round(farestPoint.distance(startPoint));
                         Event event = new Event(fingers, DownUp, distance, exeTime);
-                        String decoded = event.decode();
-                        textView.setText(decoded);
-//                        Log.d("YueTing", "下滑上滑");
-//                        String command = String.valueOf(fingers) + mediator + GestureType.DownUp.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                        String result = parser(command);
-//                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                        }
+                        if(listener != null) {
+                            listener.onEventTriggered(event);
+                        }
                     }
 
                 }
@@ -390,16 +352,9 @@ public class GestureHandler implements View.OnTouchListener {
                 else if(farestPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && farestPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT){
                     distance = Math.round(farestPoint.distance(startPoint));
                     Event event = new Event(fingers, LeftRight, distance, exeTime);
-                    String decoded = event.decode();
-                    textView.setText(decoded);
-//                    Log.d("YueTing", "左滑右滑");
-//                    String command = String.valueOf(fingers) + mediator + GestureType.LeftRight.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-//                    String result = parser(command);
-//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-//
-//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//                    }
+                    if(listener != null) {
+                        listener.onEventTriggered(event);
+                    }
                 }
             }
         }
@@ -415,15 +370,9 @@ public class GestureHandler implements View.OnTouchListener {
         @Override
         public void run() {
             Event event = new Event(fingers, DoubleClick, 0, exeTime);
-            String decoded = event.decode();
-            textView.setText(decoded);
-
-//            String command = String.valueOf(fingers) + mediator + GestureType.DoubleClick.toString() + mediator + "0" + mediator + String.valueOf(exeTime);
-//            textView.setText(parser(command));
-//
-//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-//            }
+            if(listener != null) {
+                listener.onEventTriggered(event);
+            }
         }
     }
 
@@ -435,7 +384,6 @@ public class GestureHandler implements View.OnTouchListener {
 
     private TextView textView;
 
-    
     private static String TAG = "Smartphone-Interactions";
 
     public GestureHandler(TextView textView, int windowWidth, int windowHeight) {
@@ -445,10 +393,15 @@ public class GestureHandler implements View.OnTouchListener {
         singleClickRunnable.finished = true;
     }
 
+    public void setListener(GestureCallback callback) {
+        this.listener = callback;
+    }
+
     private int fingers = 1;
     private boolean handled = false;
     private long startTime = 0;
     private long endTime = 0;
+    private GestureCallback listener;
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
@@ -514,13 +467,14 @@ public class GestureHandler implements View.OnTouchListener {
                 endTime = System.currentTimeMillis();
                 long exe_time = (endTime-startTime);
 
-                fingers = event.getPointerCount();
-                longPressRunnable.fingers = fingers;
+//                fingers = event.getPointerCount();
+//                longPressRunnable.fingers = fingers;
 
                 if(handled) { break; }
 
                 endPoint.x = event.getX(0);
                 endPoint.y = event.getY(0) + MULTI_FINGER_YOFFSET;
+                startPoint.print();
                 endPoint.print();
 
                 if (longPressRunnable.pressing) {
@@ -535,14 +489,11 @@ public class GestureHandler implements View.OnTouchListener {
                     flipGestureRunnable.fingers = fingers;
                     flipGestureRunnable.exeTime = exe_time;
                     flipGestureRunnable.run();
-
                 }
 
                 else if (singleClickRunnable.finished){
                     removeLongPressCallBack();
-                    singleClickRunnable.fingers = fingers;
-                    singleClickRunnable.exeTime = exe_time;
-                    addSingleClickCallback();
+                    addSingleClickCallback(fingers);
                 }
 
                 else {
@@ -583,14 +534,11 @@ public class GestureHandler implements View.OnTouchListener {
 
                     else if (singleClickRunnable.finished){
                         removeLongPressCallBack();
-                        singleClickRunnable.fingers = fingers;
-                        singleClickRunnable.exeTime = exeTime;
-                        addSingleClickCallback();
+                        addSingleClickCallback(fingers);
                     }
                     else {
                         removeSingleClickCallback();
                         removeLongPressCallBack();
-                        singleClickRunnable.exeTime = exeTime;
                         doubleClickRunnable.run();
                     }
                 } else {
@@ -606,8 +554,8 @@ public class GestureHandler implements View.OnTouchListener {
         return true;
     }
 
-    private void addSingleClickCallback() {
-
+    private void addSingleClickCallback(int fingers) {
+        singleClickRunnable.fingers = fingers;
         singleClickRunnable.finished = false;
         handler.postDelayed(singleClickRunnable, DOUBLECLICK_TIME_THRESHOLD);
     }
@@ -645,53 +593,34 @@ public class GestureHandler implements View.OnTouchListener {
 
         // 标记是否在边缘
         int border = onBorder(startPoint);
-
+        Event event = new Event();
         
         // 判断上下滑
         if (startPoint.verticalDistance(endPoint) > GESTURE_LONG_VERTICAL_THREOLD &&
                 startPoint.horizontalDistance(endPoint) < GESTURE_VERTICAL_LIMIT) {
             if (endPoint.above(startPoint)) {
-
-                String command = String.valueOf(fingers) + mediator + GestureType.LPUp.toString();
-                textView.setText(parser(command));
-
-                if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                }
+                Log.d("YueTing", "Test");
+                event = new Event(fingers, LPUp, 0, 0);
             }
             else if (endPoint.under(startPoint)) {
 
-                String command = String.valueOf(fingers) + mediator + GestureType.LPDown.toString();
-                textView.setText(parser(command));
-
-                if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                }
+                event = new Event(fingers, LPDown, 0, 0);
             }
         }
 
         else if (startPoint.horizontalDistance(endPoint) > GESTURE_HORIZONTAL_THREOLD &&
                 startPoint.verticalDistance(endPoint) < GESTURE_HORIZONTAL_LIMIT) {
             if (endPoint.leftOf(startPoint)) {
-
-                String command = String.valueOf(fingers) + mediator + GestureType.LPLeft.toString();
-                textView.setText(parser(command));
-
-                if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                }
+                event = new Event(fingers, LPLeft, 0, 0);
             }
             else if (endPoint.rightOf(startPoint)) {
-
-                String command = String.valueOf(fingers) + mediator + GestureType.LPRight.toString();
-                textView.setText(parser(command));
-
-                if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                    YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                }
+                event = new Event(fingers, LPRight, 0, 0);
             }
         }
 
+        if(listener != null) {
+            listener.onEventTriggered(event);
+        }
         longPressRunnable.end();
     }
 

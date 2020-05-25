@@ -36,7 +36,7 @@ import java.io.PrintWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity implements NetworkInterface{
+public class MainActivity extends AppCompatActivity implements NetworkInterface, GestureCallback{
 
     View view;
     GestureHandler gestureHandler;
@@ -59,9 +59,10 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface{
 
         view = findViewById(R.id.view);
         gestureHandler = new GestureHandler(mTextView, windowWidth, windowHeight);
+        gestureHandler.setListener(this);
         view.setOnTouchListener(gestureHandler);
 
-        YTNetwork.getInstance().createClient("192.168.1.104",1219,"smartphone-client");
+//        YTNetwork.getInstance().createClient("192.168.1.104",1219,"smartphone-client");
 
 //        new Timer().schedule(new TimerTask() {
 //            @Override
@@ -72,6 +73,17 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface{
 //        }, 1000);
     }
 
+
+    @Override
+    public void onEventTriggered(Event event) {
+        String decoded = event.decode();
+        mTextView.setText(decoded);
+    }
+
+    @Override
+    public void onTracking(Event event, float x, float y) {
+
+    }
 
     // callback function when send string to server
     @Override
