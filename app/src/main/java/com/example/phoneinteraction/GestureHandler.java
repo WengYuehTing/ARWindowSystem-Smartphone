@@ -12,10 +12,15 @@ import android.widget.Toast;
 
 import static com.example.phoneinteraction.GestureType.DoubleClick;
 import static com.example.phoneinteraction.GestureType.Down;
+import static com.example.phoneinteraction.GestureType.DownUp;
+import static com.example.phoneinteraction.GestureType.LPEnd;
 import static com.example.phoneinteraction.GestureType.LPStart;
 import static com.example.phoneinteraction.GestureType.Left;
+import static com.example.phoneinteraction.GestureType.LeftRight;
 import static com.example.phoneinteraction.GestureType.OneClick;
+import static com.example.phoneinteraction.GestureType.Right;
 import static com.example.phoneinteraction.GestureType.Up;
+import static com.example.phoneinteraction.GestureType.UpDown;
 
 
 enum GestureType {
@@ -44,7 +49,7 @@ enum GestureType {
 public class GestureHandler implements View.OnTouchListener {
 
     // 长按时间界限（超过此时间则为长按）
-    private static final long LONGPRESS_TIME_THRESHOLD = 300;
+    private static final long LONGPRESS_TIME_THRESHOLD = 600;
 
     // 双击事件界限（两次点击间隔在此时间以内则为双击）
     private static final long DOUBLECLICK_TIME_THRESHOLD = 300;
@@ -89,7 +94,7 @@ public class GestureHandler implements View.OnTouchListener {
             this.exeTime = exeTime;
         }
 
-        public String translate() {
+        public String decode() {
             String res = "";
 
             switch (fingers) {
@@ -160,6 +165,10 @@ public class GestureHandler implements View.OnTouchListener {
 
             return res;
         }
+
+        public GestureType getType() {
+            return type;
+        }
     }
 
     private class Point {
@@ -222,8 +231,8 @@ public class GestureHandler implements View.OnTouchListener {
             pressing = true;
             startTime = System.currentTimeMillis();
             Event event = new Event(fingers, LPStart, 0, LONGPRESS_TIME_THRESHOLD);
-            String encoded = event.translate();
-            textView.setText(encoded);
+            String decoded = event.decode();
+            textView.setText(decoded);
 //            String command = String.valueOf(fingers) + mediator + GestureType.LPStart.toString() + mediator + "0" + mediator + "0";
 //            textView.setText(parser(command));
 //            if(YTNetwork.getInstance().getFirstClient().isValid()) {
@@ -232,9 +241,10 @@ public class GestureHandler implements View.OnTouchListener {
         }
 
         public void end() {
-            String exeTime = String.valueOf((System.currentTimeMillis() - startTime));
-
-//            textView.setText(parser(command));
+            float exeTime = (float)(System.currentTimeMillis() - startTime);
+            Event event = new Event(fingers, LPEnd, 0, exeTime);
+            String decoded = event.decode();
+//            textView.setText(decoded);
 
 //            String command = String.valueOf(fingers) + mediator + GestureType.LPEnd.toString() + mediator + "0" + mediator + exeTime;
 //            if(YTNetwork.getInstance().getFirstClient().isValid()) {
@@ -252,13 +262,15 @@ public class GestureHandler implements View.OnTouchListener {
 
         @Override
         public void run() {
-            Log.d("YueTing", "test");
             finished = true;
-            String command = String.valueOf(fingers) + mediator + OneClick.toString() + mediator + "0" + mediator + exeTime;
-            textView.setText(parser(command));
-            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-            }
+            Event event = new Event(fingers, OneClick, 0, 0);
+            String decoded = event.decode();
+            textView.setText(decoded);
+//            String command = String.valueOf(fingers) + mediator + OneClick.toString() + mediator + "0" + mediator + exeTime;
+//            textView.setText(parser(command));
+//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//            }
 
         }
     }
@@ -277,28 +289,39 @@ public class GestureHandler implements View.OnTouchListener {
         @Override
         public void run() {
 
+            float distance = Math.round(endPoint.distance(startPoint));
+
             // Implement flip gesture method here
             if (endPoint.verticalDistance(startPoint) >= GESTURE_VERTICAL_THREOLD && endPoint.horizontalDistance(startPoint) < GESTURE_HORIZONTAL_LIMIT) {
 
 
                 if (endPoint.above(startPoint)) {
                     // 上滑
-                    String command = String.valueOf(fingers) + mediator + GestureType.Up.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                    String result = parser(command);
-                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
 
-                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                    }
+                    Event event = new Event(fingers, Up, distance, exeTime);
+                    String decoded = event.decode();
+                    textView.setText(decoded);
+
+
+
+//                    String command = String.valueOf(fingers) + mediator + GestureType.Up.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                    String result = parser(command);
+//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                    }
                 } else if (endPoint.under(startPoint)) {
                     // 下滑
-                    String command = String.valueOf(fingers) + mediator + GestureType.Down.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                    String result = parser(command);
-                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                    }
+                    Event event = new Event(fingers, Down, distance, exeTime);
+                    String decoded = event.decode();
+                    textView.setText(decoded);
+//                    String command = String.valueOf(fingers) + mediator + GestureType.Down.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                    String result = parser(command);
+//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                    }
                 }
             } else if (endPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && endPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT) {
 
@@ -306,59 +329,77 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (endPoint.leftOf(startPoint)) {
                     // 左滑
-                    String command = String.valueOf(fingers) + mediator + GestureType.Left.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                    String result = parser(command);
-                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                    }
+                    Event event = new Event(fingers, Left, distance, exeTime);
+                    String decoded = event.decode();
+                    textView.setText(decoded);
+//                    String command = String.valueOf(fingers) + mediator + GestureType.Left.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                    String result = parser(command);
+//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                    }
                 } else if (endPoint.rightOf(startPoint)) {
                     // 右滑
-                    String command = String.valueOf(fingers) + mediator + GestureType.Right.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                    String result = parser(command);
-                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                    }
+                    Event event = new Event(fingers, Right, distance, exeTime);
+                    String decoded = event.decode();
+                    textView.setText(decoded);
+//                    String command = String.valueOf(fingers) + mediator + GestureType.Right.toString() + mediator + String.valueOf(Math.round(endPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                    String result = parser(command);
+//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                    }
                 }
             } else {
                 if(farestPoint.verticalDistance(startPoint) >= GESTURE_VERTICAL_THREOLD && farestPoint.horizontalDistance(startPoint) < GESTURE_HORIZONTAL_LIMIT) {
                     Log.d("SlideDistance", String.valueOf(farestPoint.distance(startPoint)));
                     if(farestPoint.above(startPoint)) {
-                        Log.d("YueTing", "上滑下滑");
-                        String command = String.valueOf(fingers) + mediator + GestureType.UpDown.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                        String result = parser(command);
-                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                        }
+                        distance = Math.round(farestPoint.distance(startPoint));
+                        Event event = new Event(fingers, UpDown, distance, exeTime);
+                        String decoded = event.decode();
+                        textView.setText(decoded);
+//                        Log.d("YueTing", "上滑下滑");
+//                        String command = String.valueOf(fingers) + mediator + GestureType.UpDown.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                        String result = parser(command);
+//                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                        }
                     }
 
                     else if(farestPoint.under(startPoint)) {
-                        Log.d("YueTing", "下滑上滑");
-                        String command = String.valueOf(fingers) + mediator + GestureType.DownUp.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                        String result = parser(command);
-                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                        }
+                        distance = Math.round(farestPoint.distance(startPoint));
+                        Event event = new Event(fingers, DownUp, distance, exeTime);
+                        String decoded = event.decode();
+                        textView.setText(decoded);
+//                        Log.d("YueTing", "下滑上滑");
+//                        String command = String.valueOf(fingers) + mediator + GestureType.DownUp.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                        String result = parser(command);
+//                        textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                        if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                            YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                        }
                     }
 
                 }
 
                 else if(farestPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && farestPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT){
-                    Log.d("YueTing", "左滑右滑");
-                    String command = String.valueOf(fingers) + mediator + GestureType.LeftRight.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
-                    String result = parser(command);
-                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
-
-                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
-                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-                    }
+                    distance = Math.round(farestPoint.distance(startPoint));
+                    Event event = new Event(fingers, LeftRight, distance, exeTime);
+                    String decoded = event.decode();
+                    textView.setText(decoded);
+//                    Log.d("YueTing", "左滑右滑");
+//                    String command = String.valueOf(fingers) + mediator + GestureType.LeftRight.toString() + mediator + String.valueOf(Math.round(farestPoint.distance(startPoint))) + mediator + String.valueOf(exeTime);
+//                    String result = parser(command);
+//                    textView.setText(result + " " + String.valueOf(Math.round(farestPoint.distance(startPoint))));
+//
+//                    if (YTNetwork.getInstance().getFirstClient().isValid()) {
+//                        YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//                    }
                 }
             }
         }
@@ -373,13 +414,16 @@ public class GestureHandler implements View.OnTouchListener {
         public long exeTime = 0;
         @Override
         public void run() {
-            // Implement double click method here
-            String command = String.valueOf(fingers) + mediator + GestureType.DoubleClick.toString() + mediator + "0" + mediator + String.valueOf(exeTime);
-            textView.setText(parser(command));
+            Event event = new Event(fingers, DoubleClick, 0, exeTime);
+            String decoded = event.decode();
+            textView.setText(decoded);
 
-            if(YTNetwork.getInstance().getFirstClient().isValid()) {
-                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
-            }
+//            String command = String.valueOf(fingers) + mediator + GestureType.DoubleClick.toString() + mediator + "0" + mediator + String.valueOf(exeTime);
+//            textView.setText(parser(command));
+//
+//            if(YTNetwork.getInstance().getFirstClient().isValid()) {
+//                YTNetwork.getInstance().getFirstClient().getSocket().sendString(command);
+//            }
         }
     }
 
@@ -413,7 +457,7 @@ public class GestureHandler implements View.OnTouchListener {
 
             case MotionEvent.ACTION_DOWN:
 
-
+                Log.d("YueTing","One finger press down");
                 startPoint.x = event.getRawX();
                 startPoint.y = event.getRawY();
                 curPoint = startPoint;
@@ -428,17 +472,16 @@ public class GestureHandler implements View.OnTouchListener {
                 flipGestureRunnable.fingers = 1;
                 longPressRunnable.fingers = 1;
 //                startPoint.print();
-
                 break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
+                Log.d("YueTing","Multi fingers press down");
                 fingers = event.getPointerCount();
                 longPressRunnable.fingers = fingers;
                 break;
-
             case MotionEvent.ACTION_MOVE:
 
-                Log.d("YueTing","Action Move");
+                Log.d("YueTing","One finger move");
 
                 int x_offset = Math.round(event.getRawX() - curPoint.x);
                 int y_offset = Math.round(event.getRawY() - curPoint.y);
@@ -467,9 +510,12 @@ public class GestureHandler implements View.OnTouchListener {
 
             case MotionEvent.ACTION_POINTER_UP:
 
-                Log.d("YueTing","Action Pointer Up");
+                Log.d("YueTing","Multifingers press up");
                 endTime = System.currentTimeMillis();
                 long exe_time = (endTime-startTime);
+
+                fingers = event.getPointerCount();
+                longPressRunnable.fingers = fingers;
 
                 if(handled) { break; }
 
@@ -513,14 +559,14 @@ public class GestureHandler implements View.OnTouchListener {
 
             case MotionEvent.ACTION_UP:
 
-                Log.d("YueTing","Action Up");
+                Log.d("YueTing","One finger press Up");
                 endTime = System.currentTimeMillis();
                 long exeTime = (endTime-startTime);
 
                 endPoint.x = event.getRawX();
                 endPoint.y = event.getRawY();
 
-                if(fingers == 1 && !handled){
+                if(!handled){
                     if (longPressRunnable.pressing) {
                         handleLongGesture(startPoint,endPoint,fingers);
                         removeLongPressCallBack();
