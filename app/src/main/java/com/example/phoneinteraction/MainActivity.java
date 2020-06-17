@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
     GestureHandler gestureHandler;
 
     TextView mTextView;
+    CommandNetwork mCommandNetwork;
 
 
     @Override
@@ -52,12 +53,14 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
         mTextView = findViewById(R.id.output);
         setRequestedOrientation(ActivityInfo
                 .SCREEN_ORIENTATION_LANDSCAPE);
+        getSupportActionBar().hide();
 
         WindowManager wm = this.getWindowManager();
         int windowWidth = wm.getDefaultDisplay().getWidth();
         int windowHeight = wm.getDefaultDisplay().getHeight();
 
-        getSupportActionBar().hide();
+        CommandNetwork.getInstance().start();
+//        YTNetwork.getInstance().createClient("192.168.1.104", 7777, "test");
 
         view = findViewById(R.id.view);
         gestureHandler = new GestureHandler(mTextView, windowWidth, windowHeight);
@@ -78,8 +81,14 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
 
     @Override
     public void onEventTriggered(Event event) {
-        String decoded = event.decode();
-        mTextView.setText(decoded);
+        if(event.getType() != GestureType.Move) {
+            String decoded = event.decode();
+            mTextView.setText(decoded);
+        }
+
+
+        String textToSend = event.translate();
+        CommandNetwork.getInstance().send(textToSend);
     }
 
     @Override

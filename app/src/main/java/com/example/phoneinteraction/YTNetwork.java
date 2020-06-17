@@ -2,10 +2,16 @@ package com.example.phoneinteraction;
 
 
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -328,6 +334,24 @@ public class YTNetwork {
             }
         }
 
+        public JSONObject receiveJSON() throws IOException {
+            InputStream in = getInputStream();
+            ObjectInputStream i = new ObjectInputStream(in);
+            JSONObject line = null;
+            try {
+                line = (JSONObject) i.readObject();
+
+            } catch (ClassNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+
+            }
+
+
+            return line;
+
+        }
+
         private class ReceiveStringRunnable implements Runnable {
 
             @Override
@@ -335,8 +359,17 @@ public class YTNetwork {
                 while(true) {
                     if(isClosed() || !isConnected()) { continue; }
 
+//                    try {
+//                        JSONObject json = receiveJSON();
+//                        Log.d("YueTing","test1");
+////                        Log.d("YueTing", json.toString());
+//                    } catch(IOException e) {
+//                        Log.d("YueTing","test2");
+//                        e.printStackTrace();
+//                    }
                     try {
                         setReceivedMessage(is.readLine());
+
                     }catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -344,8 +377,18 @@ public class YTNetwork {
             }
         }
 
+
+
         private void setReceivedMessage(String message) {
             receivedMessage = message;
+            try {
+                JSONObject json = new JSONObject(message);
+                Log.d("YueTing", json.toString());
+                Log.d("YueTing", json.getString("result"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
 
             if(delegate != null)
                 delegate.onReceiveString(message);
