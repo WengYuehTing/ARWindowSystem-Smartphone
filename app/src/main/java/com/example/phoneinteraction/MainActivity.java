@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
 //        YTNetwork.getInstance().createClient("192.168.1.104", 7777, "test");
 
         view = findViewById(R.id.view);
-        gestureHandler = new GestureHandler(mTextView, windowWidth, windowHeight);
+        gestureHandler = new GestureHandler(windowWidth, windowHeight);
         gestureHandler.setListener(this);
         view.setOnTouchListener(gestureHandler);
 
@@ -80,20 +80,22 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
 
 
     @Override
-    public void onEventTriggered(Event event) {
+    public void onTriggered(Event event) {
         if(event.getType() != GestureType.Move) {
-            String decoded = event.decode();
-            mTextView.setText(decoded);
+            String translated = event.translate();
+            mTextView.setText(translated);
         }
 
 
-        String textToSend = event.translate();
+        String textToSend = event.decode();
         CommandNetwork.getInstance().send(textToSend);
     }
 
     @Override
-    public void onTracking(Event event, float x, float y) {
-
+    public void onTracked(Event event, float x, float y) {
+        String textToSend = event.decode();
+        textToSend += "," + String.valueOf(x) + "," + String.valueOf(y) + ",";
+        CommandNetwork.getInstance().send(textToSend);
     }
 
     // callback function when send string to server

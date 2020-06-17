@@ -48,49 +48,36 @@ enum GestureType {
     LPLeft,
     LPRight,
     Move
-};
+}
 
 class Event {
     private int fingers;
     private GestureType type;
-    private float distance;
-    private float exeTime;
     private float xOffset;
     private float yOffset;
 
     public Event() {
         this.fingers = 1;
         type = OneClick;
-        distance = 0;
-        exeTime = 0;
     }
 
-    public Event(int fingers, GestureType type, float distance, float exeTime) {
+    public Event(int fingers, GestureType type) {
         this.fingers = fingers;
         this.type = type;
-        this.distance = distance;
-        this.exeTime = exeTime;
     }
 
     public Event(int fingers, float xOffset, float yOffset) {
         this.fingers = fingers;
         this.type = Move;
-        this.distance = 0;
-        this.exeTime = 0;
         this.xOffset = xOffset;
         this.yOffset = yOffset;
     }
 
-    public String translate() {
-        if(type != Move) {
-            return String.valueOf(fingers) + "," + type.toString();
-        } else {
-            return String.valueOf(fingers) + "," + type.toString() + "," + String.valueOf(xOffset) + "," + String.valueOf(yOffset) + ",";
-        }
-
+    public String decode() {
+        return String.valueOf(fingers) + "," + type.toString();
     }
 
-    public String decode() {
+    public String translate() {
         String res = "";
 
         switch (fingers) {
@@ -171,8 +158,8 @@ class Event {
 }
 
 interface GestureCallback {
-    void onEventTriggered(Event event);
-    void onTracking(Event event, float x, float y);
+    void onTriggered(Event event);
+    void onTracked(Event event, float x, float y);
 }
 
 
@@ -264,21 +251,18 @@ public class GestureHandler implements View.OnTouchListener {
         public boolean pressing = false;
         public boolean added = false;
         public int fingers;
-        public long startTime = 0;
 
         @Override
         public void run() {
             pressing = true;
-            startTime = System.currentTimeMillis();
-            Event event = new Event(fingers, LPStart, 0, LONGPRESS_TIME_THRESHOLD);
+            Event event = new Event(fingers, LPStart);
             if(listener != null) {
-                listener.onEventTriggered(event);
+                listener.onTriggered(event);
             }
         }
 
         public void end() {
-            float exeTime = (float)(System.currentTimeMillis() - startTime);
-            Event event = new Event(fingers, LPEnd, 0, exeTime);
+            Event event = new Event(fingers, LPEnd);
 //            if(listener != null) {
 //                listener.onEventTriggered(event);
 //            }
@@ -294,9 +278,9 @@ public class GestureHandler implements View.OnTouchListener {
         @Override
         public void run() {
             finished = true;
-            Event event = new Event(fingers, OneClick, 0, 0);
+            Event event = new Event(fingers, OneClick);
             if(listener != null) {
-                listener.onEventTriggered(event);
+                listener.onTriggered(event);
             }
 
         }
@@ -311,16 +295,9 @@ public class GestureHandler implements View.OnTouchListener {
         public Point endPoint;
         public Point farestPoint;
         public int fingers;
-        public long exeTime = 0;
 
         @Override
         public void run() {
-
-            float distance = Math.round(endPoint.distance(startPoint));
-            startPoint.print();
-            endPoint.print();
-            Log.d("YueTing", String.valueOf(endPoint.verticalDistance(startPoint)));
-            Log.d("YueTing", "----------------");
 
             // Implement flip gesture method here
             if (endPoint.verticalDistance(startPoint) >= GESTURE_VERTICAL_THREOLD && endPoint.horizontalDistance(startPoint) < GESTURE_HORIZONTAL_LIMIT) {
@@ -328,15 +305,15 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (endPoint.above(startPoint)) {
                     // 上滑
-                    Event event = new Event(fingers, Up, distance, exeTime);
+                    Event event = new Event(fingers, Up);
                     if(listener != null) {
-                        listener.onEventTriggered(event);
+                        listener.onTriggered(event);
                     }
                 } else if (endPoint.under(startPoint)) {
                     // 下滑
-                    Event event = new Event(fingers, Down, distance, exeTime);
+                    Event event = new Event(fingers, Down);
                     if(listener != null) {
-                        listener.onEventTriggered(event);
+                        listener.onTriggered(event);
                     }
                 }
             } else if (endPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && endPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT) {
@@ -345,33 +322,31 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (endPoint.leftOf(startPoint)) {
                     // 左滑
-                    Event event = new Event(fingers, Left, distance, exeTime);
+                    Event event = new Event(fingers, Left);
                     if(listener != null) {
-                        listener.onEventTriggered(event);
+                        listener.onTriggered(event);
                     }
                 } else if (endPoint.rightOf(startPoint)) {
                     // 右滑
-                    Event event = new Event(fingers, Right, distance, exeTime);
+                    Event event = new Event(fingers, Right);
                     if(listener != null) {
-                        listener.onEventTriggered(event);
+                        listener.onTriggered(event);
                     }
                 }
             } else {
                 if(farestPoint.verticalDistance(startPoint) >= GESTURE_VERTICAL_THREOLD && farestPoint.horizontalDistance(startPoint) < GESTURE_HORIZONTAL_LIMIT) {
                     Log.d("SlideDistance", String.valueOf(farestPoint.distance(startPoint)));
                     if(farestPoint.above(startPoint)) {
-                        distance = Math.round(farestPoint.distance(startPoint));
-                        Event event = new Event(fingers, UpDown, distance, exeTime);
+                        Event event = new Event(fingers, UpDown);
                         if(listener != null) {
-                            listener.onEventTriggered(event);
+                            listener.onTriggered(event);
                         }
                     }
 
                     else if(farestPoint.under(startPoint)) {
-                        distance = Math.round(farestPoint.distance(startPoint));
-                        Event event = new Event(fingers, DownUp, distance, exeTime);
+                        Event event = new Event(fingers, DownUp);
                         if(listener != null) {
-                            listener.onEventTriggered(event);
+                            listener.onTriggered(event);
                         }
                     }
 
@@ -379,16 +354,14 @@ public class GestureHandler implements View.OnTouchListener {
 
                 else if(farestPoint.horizontalDistance(startPoint) >= GESTURE_HORIZONTAL_THREOLD && farestPoint.verticalDistance(startPoint) < GESTURE_VERTICAL_LIMIT){
                     if(farestPoint.leftOf(startPoint)) {
-                        distance = Math.round(farestPoint.distance(startPoint));
-                        Event event = new Event(fingers, LeftRight, distance, exeTime);
+                        Event event = new Event(fingers, LeftRight);
                         if(listener != null) {
-                            listener.onEventTriggered(event);
+                            listener.onTriggered(event);
                         }
                     } else {
-                        distance = Math.round(farestPoint.distance(startPoint));
-                        Event event = new Event(fingers, RightLeft, distance, exeTime);
+                        Event event = new Event(fingers, RightLeft);
                         if(listener != null) {
-                            listener.onEventTriggered(event);
+                            listener.onTriggered(event);
                         }
                     }
 
@@ -403,12 +376,11 @@ public class GestureHandler implements View.OnTouchListener {
     private class DoubleClickRunnable implements Runnable {
 
         public int fingers;
-        public long exeTime = 0;
         @Override
         public void run() {
-            Event event = new Event(fingers, DoubleClick, 0, exeTime);
+            Event event = new Event(fingers, DoubleClick);
             if(listener != null) {
-                listener.onEventTriggered(event);
+                listener.onTriggered(event);
             }
         }
     }
@@ -419,12 +391,9 @@ public class GestureHandler implements View.OnTouchListener {
 
     private int windowHeight;
 
-    private TextView textView;
-
     private static String TAG = "Smartphone-Interactions";
 
-    public GestureHandler(TextView textView, int windowWidth, int windowHeight) {
-        this.textView = textView;
+    public GestureHandler(int windowWidth, int windowHeight) {
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
         singleClickRunnable.finished = true;
@@ -437,7 +406,6 @@ public class GestureHandler implements View.OnTouchListener {
     private int fingers = 1;
     private boolean handled = false;
     private long startTime = 0;
-    private long endTime = 0;
     private GestureCallback listener;
 
     @Override
@@ -487,13 +455,13 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (!longPressRunnable.pressing) {
                     if (startPoint.distance(endPoint) > LONGPRESS_SHAKE_LIMIT) {
-                        removeLongPressCallBack();
+                        removeLongPressCallback();
                     }
                 }
 
-                Event moveEvent = new Event(fingers, x_offset, -y_offset);
+                Event moveEvent = new Event(fingers, Move);
                 if(listener != null) {
-                    listener.onEventTriggered(moveEvent);
+                    listener.onTracked(moveEvent, x_offset, -y_offset);
                 }
 
                 break;
@@ -501,7 +469,6 @@ public class GestureHandler implements View.OnTouchListener {
             case MotionEvent.ACTION_POINTER_UP:
 
                 Log.d("MotionEvent","ACTION_POINTER_UP");
-                long exe_Time = (System.currentTimeMillis()-startTime);
 
 //                fingers = event.getPointerCount();
 //                longPressRunnable.fingers = fingers;
@@ -515,27 +482,24 @@ public class GestureHandler implements View.OnTouchListener {
 
                 if (longPressRunnable.pressing) {
                     handleLongGesture(startPoint,endPoint,fingers);
-                    removeLongPressCallBack();
+                    removeLongPressCallback();
                 }
 
                 else if(endPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT || farestPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT) {
-                    removeLongPressCallBack();
-                    endPoint.print();
-                    addFlipCallback(startPoint, endPoint, farestPoint, fingers, exe_Time);
+                    removeLongPressCallback();
+                    addFlipCallback(startPoint, endPoint, farestPoint, fingers);
 
                 }
 
                 else if (singleClickRunnable.finished){
-                    removeLongPressCallBack();
+                    removeLongPressCallback();
                     addSingleClickCallback(fingers);
                 }
 
                 else {
                     removeSingleClickCallback();
-                    removeLongPressCallBack();
-                    doubleClickRunnable.fingers = fingers;
-                    doubleClickRunnable.exeTime = exe_Time;
-                    doubleClickRunnable.run();
+                    removeLongPressCallback();
+                    addDoubleClickCallback(fingers);
                 }
 
                 handled = true;
@@ -545,7 +509,6 @@ public class GestureHandler implements View.OnTouchListener {
             case MotionEvent.ACTION_UP:
 
                 Log.d("MotionEvent","ACTION_UP");
-                long exeTime = (System.currentTimeMillis()-startTime);
 
                 endPoint.x = event.getRawX();
                 endPoint.y = event.getRawY();
@@ -553,27 +516,25 @@ public class GestureHandler implements View.OnTouchListener {
                 if(fingers == 1 && !handled){
                     if (longPressRunnable.pressing) {
                         handleLongGesture(startPoint,endPoint,fingers);
-                        removeLongPressCallBack();
+                        removeLongPressCallback();
                     }
 
                     else if(endPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT || farestPoint.distance(startPoint) >= PRESS_SHAKE_LIMIT) {
-                        removeLongPressCallBack();
-                        addFlipCallback(startPoint, endPoint, farestPoint, fingers, exeTime);
+                        removeLongPressCallback();
+                        addFlipCallback(startPoint, endPoint, farestPoint, fingers);
                     }
 
                     else if (singleClickRunnable.finished){
-                        removeLongPressCallBack();
+                        removeLongPressCallback();
                         addSingleClickCallback(fingers);
                     }
                     else {
                         removeSingleClickCallback();
-                        removeLongPressCallBack();
-                        doubleClickRunnable.fingers = 1;
-                        doubleClickRunnable.exeTime = exeTime;
-                        doubleClickRunnable.run();
+                        removeLongPressCallback();
+                        addDoubleClickCallback(1);
                     }
                 } else {
-                    removeLongPressCallBack();
+                    removeLongPressCallback();
                 }
 
 
@@ -599,15 +560,14 @@ public class GestureHandler implements View.OnTouchListener {
         singleClickRunnable.finished = true;
     }
 
-    private void addFlipCallback(Point start, Point end, Point far, int fingers, long exeTime) {
+    private void addFlipCallback(Point start, Point end, Point far, int fingers) {
 
         flipGestureRunnable.startPoint = start;
         flipGestureRunnable.endPoint = end;
         flipGestureRunnable.farestPoint = far;
         flipGestureRunnable.fingers = fingers;
-        flipGestureRunnable.exeTime = exeTime;
-        flipGestureRunnable.run();
-//        handler.post(flipGestureRunnable);
+//        flipGestureRunnable.run();
+        handler.post(flipGestureRunnable);
     }
 
     private void addLongPressCallback() {
@@ -617,7 +577,13 @@ public class GestureHandler implements View.OnTouchListener {
 
     }
 
-    private void removeLongPressCallBack() {
+    private void addDoubleClickCallback(int fingers) {
+        doubleClickRunnable.fingers = fingers;
+//        doubleClickRunnable.run();
+        handler.post(doubleClickRunnable);
+    }
+
+    private void removeLongPressCallback() {
         handler.removeCallbacks(longPressRunnable);
         longPressRunnable.added = false;
         longPressRunnable.pressing = false;
@@ -638,32 +604,32 @@ public class GestureHandler implements View.OnTouchListener {
 
         // 标记是否在边缘
         int border = onBorder(startPoint);
-        Event event = new Event(fingers, LPEnd, 0, 0);
+        Event event = new Event(fingers, LPEnd);
         
         // 判断上下滑
         if (startPoint.verticalDistance(endPoint) > GESTURE_VERTICAL_THREOLD &&
                 startPoint.horizontalDistance(endPoint) < GESTURE_VERTICAL_LIMIT) {
             if (endPoint.above(startPoint)) {
-                event = new Event(fingers, LPUp, 0, 0);
+                event = new Event(fingers, LPUp);
             }
             else if (endPoint.under(startPoint)) {
 
-                event = new Event(fingers, LPDown, 0, 0);
+                event = new Event(fingers, LPDown);
             }
         }
 
         else if (startPoint.horizontalDistance(endPoint) > GESTURE_HORIZONTAL_THREOLD &&
                 startPoint.verticalDistance(endPoint) < GESTURE_HORIZONTAL_LIMIT) {
             if (endPoint.leftOf(startPoint)) {
-                event = new Event(fingers, LPLeft, 0, 0);
+                event = new Event(fingers, LPLeft);
             }
             else if (endPoint.rightOf(startPoint)) {
-                event = new Event(fingers, LPRight, 0, 0);
+                event = new Event(fingers, LPRight);
             }
         }
 
         if(listener != null) {
-            listener.onEventTriggered(event);
+            listener.onTriggered(event);
         }
 
         longPressRunnable.end();
