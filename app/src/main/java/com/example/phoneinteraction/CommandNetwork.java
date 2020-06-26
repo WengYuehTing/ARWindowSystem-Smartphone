@@ -11,6 +11,11 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+
+
 public class CommandNetwork {
     private static CommandNetwork instance = new CommandNetwork();
     private CommandNetwork() {}
@@ -32,6 +37,7 @@ public class CommandNetwork {
         @Override
         public void run() {
             super.run();
+
 
             while(mSocket != null){
 
@@ -66,6 +72,7 @@ public class CommandNetwork {
             while(true) {
                 try {
                     mServerSocket = new ServerSocket(8888);
+
 
                     while (true) {
                         Log.d("YueTing", "Waiting for connection");

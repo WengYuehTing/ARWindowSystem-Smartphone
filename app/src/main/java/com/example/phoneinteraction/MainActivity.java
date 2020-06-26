@@ -36,13 +36,11 @@ import java.io.PrintWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity implements NetworkInterface, GestureCallback{
+public class MainActivity extends AppCompatActivity implements GestureCallback{
 
     View view;
     GestureHandler gestureHandler;
-
     TextView mTextView;
-    CommandNetwork mCommandNetwork;
 
 
     @Override
@@ -60,22 +58,11 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
         int windowHeight = wm.getDefaultDisplay().getHeight();
 
         CommandNetwork.getInstance().start();
-//        YTNetwork.getInstance().createClient("192.168.1.104", 7777, "test");
 
         view = findViewById(R.id.view);
         gestureHandler = new GestureHandler(windowWidth, windowHeight);
         gestureHandler.setListener(this);
         view.setOnTouchListener(gestureHandler);
-
-//        YTNetwork.getInstance().createClient("192.168.1.104",1219,"smartphone-client");
-
-//        new Timer().schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//                Intent intent = new Intent(MainActivity.this, Typing.class);
-//                startActivity(intent);
-//            }
-//        }, 1000);
     }
 
 
@@ -86,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
             mTextView.setText(translated);
         }
 
-
         String textToSend = event.decode();
         CommandNetwork.getInstance().send(textToSend);
     }
@@ -96,32 +82,6 @@ public class MainActivity extends AppCompatActivity implements NetworkInterface,
         String textToSend = event.decode();
         textToSend += "," + String.valueOf(x) + "," + String.valueOf(y) + ",";
         CommandNetwork.getInstance().send(textToSend);
-    }
-
-    // callback function when send string to server
-    @Override
-    public void onSendString(String message) {
-
-    }
-
-
-    // callback function when recv string from server
-    @Override
-    public void onReceiveString(String message) {
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        YTNetwork.getInstance().delegate = this;
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        YTNetwork.getInstance().delegate = null;
 
     }
 }
