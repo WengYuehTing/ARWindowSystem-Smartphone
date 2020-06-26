@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
     View view;
     GestureHandler gestureHandler;
     TextView mTextView;
-
+    ServerManager mServerManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +57,10 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
         int windowWidth = wm.getDefaultDisplay().getWidth();
         int windowHeight = wm.getDefaultDisplay().getHeight();
 
-        CommandNetwork.getInstance().start();
+        mServerManager = new ServerManager();
+        mServerManager.Start(8888);
+
+//        CommandNetwork.getInstance().start();
 
         view = findViewById(R.id.view);
         gestureHandler = new GestureHandler(windowWidth, windowHeight);
@@ -74,14 +77,25 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
         }
 
         String textToSend = event.decode();
-        CommandNetwork.getInstance().send(textToSend);
+        mServerManager.send(textToSend);
+//        CommandNetwork.getInstance().send(textToSend);
     }
 
     @Override
     public void onTracked(Event event, float x, float y) {
         String textToSend = event.decode();
         textToSend += "," + String.valueOf(x) + "," + String.valueOf(y) + ",";
-        CommandNetwork.getInstance().send(textToSend);
+        mServerManager.send(textToSend);
+//        CommandNetwork.getInstance().send(textToSend);
 
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Log.i("TAG","End");
+        mServerManager.Stop();
     }
 }
