@@ -34,7 +34,7 @@ class ServerSocket extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
-        Log.i("TAG","Some one Connected...");
+        Log.i("YueTing","Some one Connected...");
     }
 
     @Override
@@ -44,7 +44,7 @@ class ServerSocket extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        Log.i("TAG","OnMessage:"+message.toString());
+        Log.i("YueTing","OnMessage:"+message.toString());
         _serverManager.Login(conn);
 
 //        String[] result=message.split(":");
@@ -57,7 +57,7 @@ class ServerSocket extends WebSocketServer {
 
     @Override
     public void onError(WebSocket conn, Exception ex) {
-        Log.i("TAG","Socket Exception:"+ex.toString());
+        Log.i("YueTing","Socket Exception:"+ex.toString());
     }
 
     @Override

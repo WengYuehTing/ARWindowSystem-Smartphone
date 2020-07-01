@@ -60,8 +60,6 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
         mServerManager = new ServerManager();
         mServerManager.Start(8888);
 
-//        CommandNetwork.getInstance().start();
-
         view = findViewById(R.id.view);
         gestureHandler = new GestureHandler(windowWidth, windowHeight);
         gestureHandler.setListener(this);
@@ -78,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
 
         String textToSend = event.decode();
         mServerManager.send(textToSend);
-//        CommandNetwork.getInstance().send(textToSend);
     }
 
     @Override
@@ -86,8 +83,6 @@ public class MainActivity extends AppCompatActivity implements GestureCallback{
         String textToSend = event.decode();
         textToSend += "," + String.valueOf(x) + "," + String.valueOf(y) + ",";
         mServerManager.send(textToSend);
-//        CommandNetwork.getInstance().send(textToSend);
-
     }
 
 
